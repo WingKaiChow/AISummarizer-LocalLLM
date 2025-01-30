@@ -4,10 +4,13 @@
     <title>AI Summarizer</title>
     <style>
         body { font-family: sans-serif; }
-        #urls { width: 500px; }
-        #urls input { margin-bottom: 5px; }
+        #urls { width: 800px; }
+        #urls textarea { height: 100px; width: 100%; margin-bottom: 5px; resize: vertical; }
+        #urls button { margin-right: 5px; }
         #results { margin-top: 20px; border-collapse: collapse; }
         #results th, #results td { border: 1px solid black; padding: 8px; }
+        .bullet-points { list-style-type: none; padding-left: 20px; }
+        .bullet-points li { margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -20,8 +23,8 @@
         <tr>
             <th>Name of Article</th>
             <th>Summary of Article</th>
-            <th>Sentiment of Article</th>
             <th>URL of Article</th>
+            <th>Sentiment of Article</th>
         </tr>
     </table>
 
@@ -33,6 +36,8 @@
                 return;
             }
 
+            console.log("Analyzing URLs:", urls);
+
             fetch('http://127.0.0.1:5000/analyze', {
                 method: 'POST',
                 headers: {
@@ -42,20 +47,39 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log("Backend response:", data);
                 let resultsTable = document.getElementById('results');
-                resultsTable.innerHTML = '<tr><th>Name of Article</th><th>Summary of Article</th><th>Sentiment of Article</th><th>URL of Article</th></tr>';
+                resultsTable.innerHTML = `<tr><th>Name of Article</th><th>Summary of Article</th><th>URL of Article</th><th>Sentiment of Article</th></tr>`;
                 if (Array.isArray(data)) {
                     data.forEach(result => {
                         let row = resultsTable.insertRow();
-                        Object.values(result).forEach(value => {
-                            let cell = row.insertCell();
-                            cell.textContent = value;
-                        });
+                        row.insertCell().textContent = result.name || "Article name not available";
+                        let summaryCell = row.insertCell();
+                        if (result.summary) {
+                            if (typeof result.summary === 'string') {
+                                summaryCell.textContent = result.summary.replace(/\n/g, '\n'); //Added to handle newlines
+                            } else if (Array.isArray(result.summary)) {
+                                let summaryList = document.createElement('ul');
+                                summaryList.className = 'bullet-points';
+                                result.summary.forEach(item => {
+                                    let listItem = document.createElement('li');
+                                    listItem.textContent = item;
+                                    summaryList.appendChild(listItem);
+                                });
+                                summaryCell.appendChild(summaryList);
+                            } else {
+                                summaryCell.textContent = "Summary data is not available.";
+                            }
+                        } else {
+                            summaryCell.textContent = "Summary data is not available.";
+                        }
+                        row.insertCell().textContent = result.url || "URL not available";
+                        row.insertCell().textContent = result.sentiment || "Sentiment not available";
                     });
-                } else if (data.error) {
-                    alert(data.error);
+                } else if (data && data.error) {
+                    alert("Error: " + data.error);
                 } else {
-                    alert("An unexpected error occurred.");
+                    alert("An unexpected error occurred. Please check the backend response. The response data was: " + JSON.stringify(data));
                 }
             })
             .catch(error => {

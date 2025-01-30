@@ -34,7 +34,7 @@ def analyze_urls():
                     OLLAMA_API_ENDPOINT,
                     json={"model":  OLLAMA_API_MODEL,
                           "prompt": f"""
-Summarize the following article in three concise sentences, presented as bullet points:
+Summarize the article in at most 3 concise sentences as a bullet point:
 
 {article_text}
 """,
@@ -73,7 +73,7 @@ Summarize the following article in three concise sentences, presented as bullet 
             except Exception as e:
                 print (f"e: {e}")
                 return jsonify({'error': f'An unexpected error occurred processing {url}: {e}'}), 500
-
+        print(f"result: {results}")
         return jsonify(results)
 
     except json.JSONDecodeError as e:
