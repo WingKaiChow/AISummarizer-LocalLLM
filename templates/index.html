@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Summarizer</title>
+    <style>
+        body { font-family: sans-serif; }
+        #urls { width: 500px; }
+        #urls input { margin-bottom: 5px; }
+        #results { margin-top: 20px; border-collapse: collapse; }
+        #results th, #results td { border: 1px solid black; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>AI Summarizer</h1>
+    <div id="urls">
+        <textarea id="urlInput" placeholder="Enter URLs (one per line)"></textarea>
+        <button onclick="analyze()">Analyze</button>
+    </div>
+    <table id="results">
+        <tr>
+            <th>Name of Article</th>
+            <th>Summary of Article</th>
+            <th>Sentiment of Article</th>
+            <th>URL of Article</th>
+        </tr>
+    </table>
+
+    <script>
+        function analyze() {
+            let urls = document.getElementById('urlInput').value.split('\n').map(url => url.trim()).filter(url => url);
+            if (urls.length === 0) {
+                alert("Please add at least one URL.");
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ urls: urls })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultsTable = document.getElementById('results');
+                resultsTable.innerHTML = '<tr><th>Name of Article</th><th>Summary of Article</th><th>Sentiment of Article</th><th>URL of Article</th></tr>';
+                if (Array.isArray(data)) {
+                    data.forEach(result => {
+                        let row = resultsTable.insertRow();
+                        Object.values(result).forEach(value => {
+                            let cell = row.insertCell();
+                            cell.textContent = value;
+                        });
+                    });
+                } else if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("An unexpected error occurred.");
+                }
+            })
+            .catch(error => {
+                alert('Error analyzing URLs: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
