@@ -9,8 +9,7 @@
         #urls button { margin-right: 5px; }
         #results { margin-top: 20px; border-collapse: collapse; }
         #results th, #results td { border: 1px solid black; padding: 8px; }
-        .bullet-points { list-style-type: none; padding-left: 20px; }
-        .bullet-points li { margin-bottom: 5px; }
+        .bullet-points { list-style-type: disc; padding-left: 20px; }
     </style>
 </head>
 <body>
@@ -56,16 +55,22 @@
                         row.insertCell().textContent = result.name || "Article name not available";
                         let summaryCell = row.insertCell();
                         if (result.summary) {
+                            let summaryList = document.createElement('ul');
+                            summaryList.className = 'bullet-points';
                             if (typeof result.summary === 'string') {
-                                summaryCell.textContent = result.summary.replace(/\n/g, '\n'); //Added to handle newlines
+                                result.summary.split('•').slice(1).forEach(item => { // Split by bullet point and skip the first empty item
+                                    let listItem = document.createElement('li');
+                                    listItem.textContent = item.trim();
+                                    summaryList.appendChild(listItem);
+                                });
                             } else if (Array.isArray(result.summary)) {
-                                let summaryList = document.createElement('ul');
-                                summaryList.className = 'bullet-points';
                                 result.summary.forEach(item => {
                                     let listItem = document.createElement('li');
                                     listItem.textContent = item;
                                     summaryList.appendChild(listItem);
                                 });
+                            }
+                            if (summaryList.children.length > 0) {
                                 summaryCell.appendChild(summaryList);
                             } else {
                                 summaryCell.textContent = "Summary data is not available.";
