@@ -15,9 +15,9 @@ OLLAMA_API_MODEL = "llama3.2"
 def analyze_urls():
     try:
         data = request.get_json()
-        print (f"data: {data}")
+        #print (f"data: {data}")
         urls = data.get('urls')
-        print (f"urls: {urls}")
+        #print (f"urls: {urls}")
         if not urls:
             return jsonify({'error': 'No URLs provided'}), 400
 
@@ -27,8 +27,11 @@ def analyze_urls():
                 response = requests.get(url)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.content, 'html.parser')
+                
+                title = soup.title.string
+
                 article_text = ' '.join(soup.get_text().split())
-                print (f"article_text:{article_text}")
+                #print (f"article_text:{article_text}")
 
                 llm_response = requests.post(
                     OLLAMA_API_ENDPOINT,
@@ -44,36 +47,31 @@ Summarize the article in at most 3 concise sentences as a bullet point:
                     },
                     timeout=180
                 )
-                print(f"Response Text: {llm_response.text}")
+                #print(f"Response Text: {llm_response.text}")
                 llm_response.raise_for_status()
-                print (f"llm_response.raise_for_status(): {llm_response.raise_for_status()}")
-                #llm_data = llm_response.json()
+                #print (f"llm_response.raise_for_status(): {llm_response.raise_for_status()}")
+
                 # Example usage:
                 llm_data = process_streamed_response(llm_response.text)
-                print (f"llm_data: {llm_data}")
-
-                #sentiment = llm_data.get('sentiment', 'N/A')
-                #print (f"sentiment: {sentiment}")
-                #summary = llm_data.get('summary', 'N/A')
-                #print (f"summary: {summary}")
+                #print (f"llm_data: {llm_data}")
                 
                 results.append({
-                    'name': url.split('/')[-1],
+                    'name': title,
                     'summary': llm_data,
                     'sentiment': "N/A",
                     'url': url,
                 })
 
             except requests.exceptions.RequestException as e:
-                print (f"e: {e}")
+                #print (f"e: {e}")
                 return jsonify({'error': f'Error fetching URL {url}: {e}'}), 500
             except json.JSONDecodeError as e:
-                print (f"e: {e}")
+                #print (f"e: {e}")
                 return jsonify({'error': f'Error decoding Ollama response for {url}: {e}'}), 500
             except Exception as e:
-                print (f"e: {e}")
+                #print (f"e: {e}")
                 return jsonify({'error': f'An unexpected error occurred processing {url}: {e}'}), 500
-        print(f"result: {results}")
+        #print(f"result: {results}")
         return jsonify(results)
 
     except json.JSONDecodeError as e:
@@ -93,7 +91,7 @@ def process_streamed_response(response_text):
             
             # Check if this is the last chunk
             if data['done']:
-                print("\nFinal Response:")
+                """print("\nFinal Response:")
                 print(response)
                 print(f"Done Reason: {data.get('done_reason', 'Unknown')}")
                 print(f"Context: {data.get('context', 'No context provided')}")
@@ -102,7 +100,7 @@ def process_streamed_response(response_text):
                 print(f"Prompt Eval Count: {data.get('prompt_eval_count', 'Not available')}")
                 print(f"Prompt Eval Duration: {data.get('prompt_eval_duration', 'Not available')} ns")
                 print(f"Eval Count: {data.get('eval_count', 'Not available')}")
-                print(f"Eval Duration: {data.get('eval_duration', 'Not available')} ns")
+                print(f"Eval Duration: {data.get('eval_duration', 'Not available')} ns")"""
                 break  # Exit the loop if 'done' is True
         
         except json.JSONDecodeError:
