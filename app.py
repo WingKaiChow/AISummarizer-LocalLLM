@@ -59,10 +59,18 @@ def analyze_urls():
         results = []
         for url in urls:
             try:
-                response = requests.get(url)
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1',
+                }          
+                response = requests.get(url, headers=headers)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.content, 'html.parser')
-                title = soup.title.string
+                title = soup.title.string if soup.title else "No title found"
                 article_text = ' '.join(soup.get_text().split())
 
                 llm_response = requests.post(
@@ -86,7 +94,7 @@ Sentiment: [positive, neutral, or negative]
                     timeout=180
                 )
                 llm_response.raise_for_status()
-                print (f"LLM Response:{llm_response.text}")
+                print(f"LLM Response for {url}:{llm_response.text}")
                 summary, sentiment = parse_llm_response(llm_response.text)
                 
                 if summary:
@@ -109,18 +117,39 @@ Sentiment: [positive, neutral, or negative]
                 })
 
             except requests.exceptions.RequestException as e:
-                return jsonify({'error': f'Error fetching URL {url}: {e}'}), 500
+                results.append({
+                    'name': "N/A",
+                    'summary': None,
+                    'sentiment': None,
+                    'url': url,
+                    'error': f'Error fetching URL: {e}'
+                })
+                print(f"Error with URL {url}: {e}")
             except json.JSONDecodeError as e:
-                return jsonify({'error': f'Error decoding Ollama response for {url}: {e}'}), 500
+                results.append({
+                    'name': "N/A",
+                    'summary': None,
+                    'sentiment': None,
+                    'url': url,
+                    'error': f'Error decoding Ollama response: {e}'
+                })
+                print(f"Error decoding Ollama response for {url}: {e}")
             except Exception as e:
-                return jsonify({'error': f'An unexpected error occurred processing {url}: {e}'}), 500
+                results.append({
+                    'name': "N/A",
+                    'summary': None,
+                    'sentiment': None,
+                    'url': url,
+                    'error': f'An unexpected error occurred: {e}'
+                })
+                print(f"An unexpected error occurred with {url}: {e}")
+
         return jsonify(results)
 
     except json.JSONDecodeError as e:
         return jsonify({'error': f'Invalid JSON input: {e}'}), 400
     except Exception as e:
         return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
