@@ -96,18 +96,6 @@ Sentiment: [positive, neutral, or negative]
                 llm_response.raise_for_status()
                 print(f"LLM Response for {url}:{llm_response.text}")
                 summary, sentiment = parse_llm_response(llm_response.text)
-                
-                if summary:
-                    print("Summary:")
-                    for point in summary:
-                        print(point)
-                else:
-                    print("Summary not found.")
-
-                if sentiment:
-                    print("\nSentiment:", sentiment)
-                else:
-                    print("\nSentiment not found.")
 
                 results.append({
                     'name': title,
@@ -124,7 +112,6 @@ Sentiment: [positive, neutral, or negative]
                     'url': url,
                     'error': f'Error fetching URL: {e}'
                 })
-                print(f"Error with URL {url}: {e}")
             except json.JSONDecodeError as e:
                 results.append({
                     'name': "N/A",
@@ -133,7 +120,6 @@ Sentiment: [positive, neutral, or negative]
                     'url': url,
                     'error': f'Error decoding Ollama response: {e}'
                 })
-                print(f"Error decoding Ollama response for {url}: {e}")
             except Exception as e:
                 results.append({
                     'name': "N/A",
@@ -142,7 +128,6 @@ Sentiment: [positive, neutral, or negative]
                     'url': url,
                     'error': f'An unexpected error occurred: {e}'
                 })
-                print(f"An unexpected error occurred with {url}: {e}")
 
         return jsonify(results)
 
